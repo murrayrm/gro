@@ -1,13 +1,33 @@
-#-------------------------------------------------
+# gro.pro - Qt project file for gro
 #
-# Project created by QtCreator 2012-05-23T09:21:54
+# Created by QtCreator 2012-05-23T09:21:54
+# Modified 4 Apr 2020, Richard M. Murray
 #
-#-------------------------------------------------
+# This is the project file for the `gro` application.  To create the
+# makefiles required to compile `gro`, run `qmake` followed by `make`.
+# A number of variables can be used to modify the compilation:
+#
+#   CONFIG=nogui	Create the command line version of gro
+#   CHIPMUNK=<dir>	Set path to Chipmunk2D directory
+#   CCL=<dir>		Set path to CCL directory
+#   OUT_PWD=<dir>	Installation directory (?)
+#
+# The default locations for chipmunk and CCL are ../chipmunk and ../ccl.
 
-# uncomment this line to compile grong (the no gui version)
-# CONFIG += nogui
-
+# Turn off warnings
 CONFIG += warn_off
+
+# Add paths to linking commands
+defined(CHIPMUNK, var) {
+  LIBS += -L$$CHIPMUNK
+  DEPENDPATH += $$CHIPMUNK
+  INCLUDEPATH += $$CHIPMUNK/include/chipmunk
+}
+defined(CCL, var) {
+  LIBS += -L$$CCL
+  PRE_TARGETDEPS += $$CCL/libccl.a
+  INCLUDEPATH += $$CCL
+}
 
 contains ( CONFIG, nogui ) {
   QMAKE_CXXFLAGS += -DNOGUI #-std=gnu99
@@ -25,9 +45,11 @@ macx {
   QMAKE_CXXFLAGS += -fast
 }
 
-makelinks.commands += echo Making links in $$OUT_PWD;
-makelinks.commands += ln -s -f examples $${OUT_PWD}/examples;
-makelinks.commands += ln -s -f include $${OUT_PWD}/include;
+defined(OUT_PWD, var) {
+  makelinks.commands += echo Making links in $$OUT_PWD;
+  makelinks.commands += ln -s -f examples $${OUT_PWD}/examples;
+  makelinks.commands += ln -s -f include $${OUT_PWD}/include;
+}
 
 QMAKE_EXTRA_TARGETS += makelinks
 POST_TARGETDEPS += makelinks
@@ -84,19 +106,8 @@ contains ( CONFIG, nogui ) {
   FORMS    += gui.ui
 }
 
-macx {
-  LIBS += -L../build-ccl -lccl -L../chipmunk/src -lchip
-  PRE_TARGETDEPS += ../build-ccl/libccl.a
-  DEPENDPATH += ../chipmunk/
-  INCLUDEPATH += ../ccl/ ../chipmunk/include/chipmunk/
-  # mytarget.commands = COPY EXAMPLES FILE TO APPLICATION DIRECTORY
-}
-linux {
-  LIBS += -L../ccl -lccl -L../chipmunk -lchipmunk
-  PRE_TARGETDEPS += ../ccl/libccl.a
-  DEPENDPATH += ../chipmunk/
-  INCLUDEPATH += ../ccl/ ../chipmunk/include/chipmunk/
-  # mytarget.commands = COPY EXAMPLES FILE TO APPLICATION DIRECTORY
+macx|linux {
+  LIBS += -lccl -lchipmunk
 }
 
 OTHER_FILES += \
