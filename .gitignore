@@ -1,5 +1,15 @@
 # objects and archives
-Ingore*.[oa]
+*.[oa]
 
 # ignore user settings file
 gro.pro.user
+
+# ignore files created by qmake
+Makefile
+.qmake.stash
+
+# ignore files created by make
+moc_*.cpp
+moc_*.h
+qrc_icons.cpp
+gro.app
