@@ -81,7 +81,18 @@ void Gui::about ( void ) {
 
     // set directory for C++ functions like fopen
     // NOTE: Here is probably the wrong place for this code.
-    chdir("../../..");
+    
+    /* Create a list of places to look */
+    const char *loclist[] = {"$GROHOME", "$PWD", "$HOME", "/", NULL};
+
+    /* Go through the list and stop when we find one that works */
+    int i = 0;
+    for (i = 0; loclist[i] != NULL; ++i) {
+      const char *loc = loclist[i];
+      if (loc[0] == '$' && chdir(getenv(&loc[1])) == 0) { break; }
+    }
+    if (loclist[i] == NULL) { exit(-1); }
+			  
     GetCurrentDir(cCurrentPath, sizeof(cCurrentPath));
     cCurrentPath[sizeof(cCurrentPath) - 1] = '\0'; /* not really required */
     char buf[1000];
