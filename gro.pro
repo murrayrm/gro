@@ -10,7 +10,7 @@
 #   CONFIG=nogui	Create the command line version of gro
 #   CHIPMUNK=<dir>	Set path to Chipmunk2D directory
 #   CCL=<dir>		Set path to CCL directory
-#   OUT_PWD=<dir>	Installation directory (?)
+#   PREFIX=<dir>	Installation directory (not yet complete)
 #
 # The default locations for chipmunk and CCL are ../chipmunk and ../ccl.
 
@@ -45,7 +45,7 @@ macx {
   QMAKE_CXXFLAGS += -fast
 }
 
-defined(OUT_PWD, var) {
+defined(PREFIX, var) {
   makelinks.commands += echo Making links in $$OUT_PWD;
   makelinks.commands += ln -s -f examples $${OUT_PWD}/examples;
   makelinks.commands += ln -s -f include $${OUT_PWD}/include;
