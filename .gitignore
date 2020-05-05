@@ -1,15 +1,18 @@
-# objects and archives
-*.[oa]
-
-# ignore user settings file
-gro.pro.user
-
-# ignore files created by qmake
-Makefile
-.qmake.stash
-
-# ignore files created by make
+*.o
 moc_*.cpp
 moc_*.h
+ui_gui.h
+Makefile
 qrc_icons.cpp
+.qmake.stash
+.DS_store
+tags
+*~
+auto/
+gro
 gro.app
+
+# Ignore directories for libraries (usually symbolic links)
+bioscrape
+ccl
+chipmunk
