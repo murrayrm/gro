@@ -8,6 +8,7 @@
 # A number of variables can be used to modify the compilation:
 #
 #   CONFIG=nogui	Create the command line version of gro
+#   CONFIG=console      Create command line version instead of bundle
 #   CHIPMUNK=<dir>	Set path to Chipmunk2D directory
 #   CCL=<dir>		Set path to CCL directory
 #   PREFIX=<dir>	Installation directory (not yet complete)
@@ -58,10 +59,15 @@ contains ( CONFIG, nogui ) {
   QT -= core gui
   TARGET = grong
   TEMPLATE = app
+  CONFIG -= app_bundle
 } else {
   QT += core gui widgets
   TARGET = gro
   TEMPLATE = app
+  }
+
+contains ( CONFIG, console ) {
+  CONFIG -= app_bundle
 }
 
 ICON = groicon.icns
