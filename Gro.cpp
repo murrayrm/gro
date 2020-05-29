@@ -19,7 +19,8 @@
 
 #include "Micro.h"
 #include "EColi.h"
-//#include "Yeast.h"
+#include "Yeast.h"
+#include "Epithelial.h"
 #include "Programs.h"
 
 static gro_Program * current_gro_program = NULL;
@@ -93,7 +94,7 @@ Value * new_ecoli ( std::list<Value *> * args, Scope * s ) {
 
 }
 
-/*
+
 Value * new_yeast ( std::list<Value *> * args, Scope * s ) {
 
   std::list<Value *>::iterator i = args->begin();
@@ -144,7 +145,57 @@ Value * new_yeast ( std::list<Value *> * args, Scope * s ) {
 
 }
 
-*/
+Value * new_epithelial ( std::list<Value *> * args, Scope * s ) {
+
+  std::list<Value *>::iterator i = args->begin();
+  Value * settings = *i; i++;
+
+  ASSERT ( args->size() == 2 );
+
+  Program * prog = (*i)->program_value()->copy(); // this copy is deleted in ~Cell?
+  //printf ( ">> prog = %x in new_ecoli\n", prog );
+
+  World * world = current_gro_program->get_world();
+
+  float x = 0, y = 0, theta = 0, vol;
+
+  if ( settings->get_type() == Value::RECORD ) {
+
+    if ( settings->getField ( "x" ) )
+      x = settings->getField ( "x" )->real_value();
+
+    if ( settings->getField ( "y" ) )
+      y = settings->getField ( "y" )->real_value();
+
+    if ( settings->getField ( "theta" ) )
+      theta = settings->getField ( "theta" )->real_value();
+
+    if ( settings->getField ( "volume" ) )
+      vol = settings->getField ( "volume" )->real_value();
+    else
+      vol = 1.0;
+
+  } else {
+
+    fprintf ( stderr, "First argument to 'epithelial' should be a record\n" );
+    exit ( -1 );
+
+  }
+
+  Epithelial * c = new Epithelial ( world, x, y, theta, vol);
+
+  current_cell = c;
+  c->set_gro_program ( prog ); // prog is deleted if/when the cell is deleted in ~Cell
+  world->add_cell ( c );
+  prog->init_params ( current_gro_program->get_scope() );
+  prog->init ( current_gro_program->get_scope() );
+  current_cell = NULL;
+
+  return new Value(Value::UNIT);
+
+}
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 // SIGNALLING
@@ -219,7 +270,7 @@ Value * set_signal ( std::list<Value *> * args, Scope * s ) {
   Value * n = *i; i++;
   Value * x = *i; i++;
   Value * y = *i; i++;
-  Value * val = *i; 
+  Value * val = *i;
 
   world->set_signal ( n->int_value(), x->num_value(), y->num_value(), val->num_value() );
 
@@ -371,7 +422,7 @@ Value * die ( std::list<Value *> * args, Scope * s ) {
   World * world = current_gro_program->get_world();
   std::list<Value *>::iterator i = args->begin();
 
-  if ( current_cell != NULL ) 
+  if ( current_cell != NULL )
     current_cell->mark_for_death();
   else
     printf ( "Warning: Called die() from outside a cell program. No action taken\n" );
@@ -462,7 +513,7 @@ Value * world_stats ( std::list<Value *> * args, Scope * s ) {
   if ( name->string_value() == "pop_size" ) {
 
     return new Value ( world->get_pop_size() );
-    
+
   } else printf ( "unknown statistic %s in call to 'stat'\n", name->string_value().c_str() );
 
   return new Value ( 0 );
@@ -742,11 +793,11 @@ Value * run ( std::list<Value *> * args, Scope * s ) {
     cpBodySetTorque ( body, -adot ); // damp angular rotation
 
     cpBodyApplyForce ( // apply force
-      current_cell->get_shape()->body, 
-      cpv ( 
+      current_cell->get_shape()->body,
+      cpv (
         ( dvel*cos(a) - v.x ) * world->get_sim_dt(),
         ( dvel*sin(a) - v.y ) * world->get_sim_dt()
-      ), 
+      ),
       cpv ( 0, 0 ) );
 
   } else
@@ -762,7 +813,7 @@ Value * tumble ( std::list<Value *> * args, Scope * s ) {
   World * world = current_gro_program->get_world();
   std::list<Value *>::iterator i = args->begin();
 
-  float vel = (*i)->num_value(); 
+  float vel = (*i)->num_value();
 
   if ( current_cell != NULL ) {
 
@@ -774,11 +825,11 @@ Value * tumble ( std::list<Value *> * args, Scope * s ) {
     cpBodySetTorque ( body, vel - adot ); // apply torque
 
     cpBodyApplyForce ( // damp translation
-      current_cell->get_shape()->body, 
-      cpv ( 
+      current_cell->get_shape()->body,
+      cpv (
         - v.x * world->get_sim_dt(),
         - v.y * world->get_sim_dt()
-      ), 
+      ),
       cpv ( 0, 0 ) );
 
   } else
@@ -792,8 +843,8 @@ Value * tumble ( std::list<Value *> * args, Scope * s ) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Gro Class Methods
-// 
-// 
+//
+//
 
 gro_Program::gro_Program ( const char * path, int ac, char ** av ) : MicroProgram(), pathname(path), scope(NULL), argc(ac), argv(av) {
 
@@ -809,7 +860,7 @@ void gro_Program::add_method ( Value::TYPE t, int num_args, const char * name, E
   TypeExpr * R = new TypeExpr ( t );
   std::list<TypeExpr *> * Ta = new std::list<TypeExpr *>;
   for ( i=0; i<num_args; i++ )
-    Ta->push_back ( new TypeExpr ( true ) ); 
+    Ta->push_back ( new TypeExpr ( true ) );
   scope->add ( name, new Value ( f, R, Ta ) ); // Ta and its elements should be deleted when scope is deleted
 
 }
@@ -872,7 +923,7 @@ void gro_Program::init ( World * w ) {
   if ( world_update_program ) {
     world_update_program->init_params ( scope );
     world_update_program->init ( scope );
-  } 
+  }
 
 }
 
@@ -888,25 +939,25 @@ Value * gro_Program::eval ( World * world, Cell * cell, Expr * e ) {
 
   if ( cell->just_divided() ) {
 
-    scope->assign ( "just_divided", new Value ( true ) );    
-    cell->set_division_indicator ( false ); 
+    scope->assign ( "just_divided", new Value ( true ) );
+    cell->set_division_indicator ( false );
 
     if ( cell->is_daughter() ) {
-      scope->assign ( "daughter", new Value ( true ) ); 
-      cell->set_daughter_indicator ( false ); 
+      scope->assign ( "daughter", new Value ( true ) );
+      cell->set_daughter_indicator ( false );
     } else {
-      scope->assign ( "daughter", new Value ( false ) ); 
+      scope->assign ( "daughter", new Value ( false ) );
     }
 
   } else {
 
-    scope->assign ( "just_divided", new Value ( false ) );    
-    scope->assign ( "daughter", new Value ( false ) ); 
+    scope->assign ( "just_divided", new Value ( false ) );
+    scope->assign ( "daughter", new Value ( false ) );
 
   }
 
-  scope->assign ( "dt", new Value ( world->get_sim_dt() ) ); 
-  scope->assign ( "volume", new Value ( cell->get_volume() ) ); 
+  scope->assign ( "dt", new Value ( world->get_sim_dt() ) );
+  scope->assign ( "volume", new Value ( cell->get_volume() ) );
   scope->assign ( "selected", new Value ( cell->is_selected() ) );
   scope->assign ( "id", new Value ( cell->get_id() ) );
 
@@ -932,25 +983,25 @@ void gro_Program::update ( World * world, Cell * cell ) {
 
   if ( cell->just_divided() ) {
 
-    scope->assign ( "just_divided", new Value ( true ) );    
-    cell->set_division_indicator ( false ); 
+    scope->assign ( "just_divided", new Value ( true ) );
+    cell->set_division_indicator ( false );
 
     if ( cell->is_daughter() ) {
-      scope->assign ( "daughter", new Value ( true ) ); 
-      cell->set_daughter_indicator ( false ); 
+      scope->assign ( "daughter", new Value ( true ) );
+      cell->set_daughter_indicator ( false );
     } else {
-      scope->assign ( "daughter", new Value ( false ) ); 
+      scope->assign ( "daughter", new Value ( false ) );
     }
 
   } else {
 
-    scope->assign ( "just_divided", new Value ( false ) );    
-    scope->assign ( "daughter", new Value ( false ) ); 
+    scope->assign ( "just_divided", new Value ( false ) );
+    scope->assign ( "daughter", new Value ( false ) );
 
   }
 
-  scope->assign ( "dt", new Value ( world->get_sim_dt() ) ); 
-  scope->assign ( "volume", new Value ( cell->get_volume() ) ); 
+  scope->assign ( "dt", new Value ( world->get_sim_dt() ) );
+  scope->assign ( "volume", new Value ( cell->get_volume() ) );
   scope->assign ( "selected", new Value ( cell->is_selected() ) );
   scope->assign ( "id", new Value ( cell->get_id() ) );
 
@@ -982,7 +1033,7 @@ void gro_Program::world_update ( World * world ) {
 
   if ( !parse_error ) {
 
-  if ( world_update_program ) 
+  if ( world_update_program )
     world_update_program->step ( scope );
 
   }
@@ -1012,7 +1063,8 @@ void register_gro_functions ( void ) {
 
   // Cell types
   register_ccl_function ( "ecoli", new_ecoli );
-  //register_ccl_function ( "yeast", new_yeast );
+  register_ccl_function ( "yeast", new_yeast );
+  register_ccl_function ( "epithelial", new_epithelial );
 
   // Signals
   register_ccl_function ( "signal",        new_signal );

@@ -1,0 +1,84 @@
+// This program creates a layer of gut epithelial cells with some section
+// starting off inflamed, emitting an inflammatory signal.
+// E. Coli begin growing around the gut layer, and will fluoresce if they
+// are near the inflamed region. Try it out:)
+
+
+include gro
+
+// Epithelial are round cells. Denote radius here.
+set("epithelial_radius", 30);
+
+// Set the diffusion and degradation rate
+s := signal(4, 0.3);
+
+// Absorption rate, if E. Coli should absorb signal
+k:=2;
+
+// Create bacteria program that will grow on top of epithelial
+
+program bacteria() := {
+  // Signal concentration and GFP will initially be 0
+	x := 0;
+	gfp := 0;
+
+	// For the duration of the simulation
+	true : {
+		// Get the signal that's emitted by the sender
+		x := get_signal ( s ),
+
+		// Fluoresce at some rate * the signal
+		gfp := 10000*x,
+
+		// If desired, E. coli can absorb signal
+		// absorb_signal ( s, k*x )
+	}
+};
+
+// All gut cells will glow red
+program gut() := {
+		rfp := 100;
+};
+
+// Sender cells emit pink signal s
+program gut_sender() :={
+	true:{
+		emit_signal(s, 10);
+	}
+};
+
+// Create 200 gut cells
+N := 200;
+
+// Instantiate gut cells in sinusoidal shape, with some becoming signal
+// emitters (inflamed cells), others normal
+foreach i in range N do
+  if i<200 then
+	epithelial([ y := (sin(6*i/20.0)+sin(3*i/20.0)+sin(7*i/20.0))*80, x := (i*30)-2300], program gut_sender())
+	else epithelial([ y := (sin(6*i/20.0)+sin(3*i/20.0)+sin(7*i/20.0))*80, x := (i*30)-2300], program gut())
+  end
+end;
+
+// If desired, save frames for movie.
+/*
+program main() := {
+ t := 0; // framerate time tracker
+ s := 0; // total time tracker
+ n := 0;
+ true : {
+ t := t + dt,
+ s := s + dt
+ }
+ t > 2 : {
+ snapshot ( "expression" <> if n <10 then "0" else "" end <> tostring(n) <> ".tif" ),
+ n := n + 1,
+ t := 0
+ }
+ s > 150 : {
+ stop()
+ }
+};
+*/
+
+// Start with one E. coli cell atop the gut folds.
+ecoli([ x:= 300, y:= -120 ], program bacteria());
