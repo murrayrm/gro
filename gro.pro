@@ -8,10 +8,9 @@
 # A number of variables can be used to modify the compilation:
 #
 #   CONFIG=nogui	Create the command line version of gro
-#   CONFIG=console      Create command line version instead of bundle
 #   CHIPMUNK=<dir>	Set path to Chipmunk2D directory
 #   CCL=<dir>		Set path to CCL directory
-#   PREFIX=<dir>	Installation directory (not yet complete)
+#   OUT_PWD=<dir>	Installation directory (?)
 #
 # The default locations for chipmunk and CCL are ../chipmunk and ../ccl.
 
@@ -46,7 +45,7 @@ macx {
   QMAKE_CXXFLAGS += -fast
 }
 
-defined(PREFIX, var) {
+defined(OUT_PWD, var) {
   makelinks.commands += echo Making links in $$OUT_PWD;
   makelinks.commands += ln -s -f examples $${OUT_PWD}/examples;
   makelinks.commands += ln -s -f include $${OUT_PWD}/include;
@@ -59,15 +58,10 @@ contains ( CONFIG, nogui ) {
   QT -= core gui
   TARGET = grong
   TEMPLATE = app
-  CONFIG -= app_bundle
 } else {
   QT += core gui widgets
   TARGET = gro
   TEMPLATE = app
-  }
-
-contains ( CONFIG, console ) {
-  CONFIG -= app_bundle
 }
 
 ICON = groicon.icns
@@ -87,7 +81,8 @@ SOURCES += main.cpp\
     GroPainter.cpp \
     Cell.cpp \
     reaction.cpp \
-    #Yeast.cpp
+    Yeast.cpp \
+    Epithelial.cpp
 
 HEADERS  += gui.h \
     GroThread.h \
@@ -101,7 +96,8 @@ HEADERS  += gui.h \
     EColi.h \
     Cell.h \
     ui_gui.h \
-    Yeast.h
+    Yeast.h \
+    Epithelial.h
 
 contains ( CONFIG, nogui ) {
   SOURCES -= GroThread.cpp GroWidget.cpp GroPainter.cpp gui.cpp Themes.cpp
